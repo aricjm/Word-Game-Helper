@@ -1,0 +1,913 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Find English words you can make from the letters you have."
+    />
+    <title>Letterbox — Find your words</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        background: #101210;
+        color: #f1f3ed;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        --muted: #9a9f96;
+        --line: #292e29;
+        --surface: #171a17;
+        --green: #c4f06b;
+        --green-dark: #213019;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 50% -18%, #263020 0, transparent 48%),
+          #101210;
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      .page {
+        width: min(100% - 40px, 920px);
+        margin: 0 auto;
+        padding: 34px 0 64px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-bottom: 32px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: #f1f3ed;
+        font-size: 15px;
+        font-weight: 750;
+        letter-spacing: -0.035em;
+        text-decoration: none;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border-radius: 9px;
+        background: var(--green);
+        color: #16200e;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .topbar-note {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .hero {
+        max-width: 690px;
+        margin: 72px auto 42px;
+        text-align: center;
+      }
+
+      .eyebrow {
+        margin: 0 0 17px;
+        color: var(--green);
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(36px, 7vw, 58px);
+        font-weight: 720;
+        letter-spacing: -0.065em;
+        line-height: 1.04;
+      }
+
+      .intro {
+        max-width: 490px;
+        margin: 17px auto 0;
+        color: var(--muted);
+        font-size: 15px;
+        line-height: 1.65;
+      }
+
+      .search-panel {
+        display: flex;
+        gap: 10px;
+        max-width: 650px;
+        margin: 0 auto;
+        padding: 8px;
+        border: 1px solid #343a32;
+        border-radius: 18px;
+        background: #191d19;
+        box-shadow: 0 18px 60px #00000030;
+      }
+
+      .search-panel:focus-within {
+        border-color: #687e46;
+        box-shadow: 0 0 0 3px #c4f06b14, 0 18px 60px #00000030;
+      }
+
+      .search-input {
+        flex: 1;
+        min-width: 0;
+        padding: 13px 15px;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #f1f3ed;
+        font-size: 18px;
+        letter-spacing: 0.12em;
+      }
+
+      .search-input::placeholder {
+        color: #73796e;
+        letter-spacing: 0.02em;
+      }
+
+      .search-button {
+        min-width: 128px;
+        padding: 0 20px;
+        border: 0;
+        border-radius: 12px;
+        background: var(--green);
+        color: #1b2611;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 750;
+        transition:
+          background 140ms ease,
+          transform 140ms ease;
+      }
+
+      .search-button:hover {
+        transform: translateY(-1px);
+        background: #d3f891;
+      }
+
+      .search-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.55;
+      }
+
+      .search-button:focus-visible,
+      .word-chip:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 3px;
+      }
+
+      .hint {
+        margin: 13px 4px 0;
+        color: #7f857a;
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .message {
+        min-height: 22px;
+        margin: 24px auto 0;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+      }
+
+      .message[data-error="true"] {
+        color: #ff9a8b;
+      }
+
+      .results {
+        margin-top: 37px;
+      }
+
+      .results[hidden] {
+        display: none;
+      }
+
+      .results-heading {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+
+      .results-heading h2 {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .results-count {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .add-word-form {
+        display: flex;
+        gap: 8px;
+        max-width: 470px;
+        margin: 0 0 20px;
+        padding: 6px;
+        border: 1px solid var(--line);
+        border-radius: 13px;
+        background: var(--surface);
+      }
+
+      .add-word-form:focus-within {
+        border-color: #687e46;
+      }
+
+      .add-word-input {
+        flex: 1;
+        min-width: 0;
+        padding: 9px 11px;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        color: #f1f3ed;
+        font-size: 13px;
+      }
+
+      .add-word-input::placeholder {
+        color: #73796e;
+      }
+
+      .add-word-button {
+        padding: 0 13px;
+        border: 1px solid #52653a;
+        border-radius: 9px;
+        background: var(--green-dark);
+        color: var(--green);
+        cursor: pointer;
+        font-size: 12px;
+        font-weight: 650;
+      }
+
+      .add-word-button:hover {
+        border-color: #9ec759;
+        background: #2b3c21;
+      }
+
+      .word-group {
+        margin-top: 12px;
+        padding: 20px 22px 22px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        background: linear-gradient(135deg, #191c19, #151815);
+      }
+
+      .group-heading {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 16px;
+      }
+
+      .group-heading h3 {
+        margin: 0;
+        color: #e8ebe3;
+        font-size: 14px;
+        font-weight: 650;
+      }
+
+      .group-count {
+        color: #7f857a;
+        font-size: 11px;
+      }
+
+      .word-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .word-entry {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .word-chip {
+        min-height: 35px;
+        padding: 7px 13px;
+        border: 1px solid #333a32;
+        border-radius: 999px;
+        background: #202420;
+        color: #d7dbd1;
+        cursor: pointer;
+        font-size: 13px;
+        line-height: 1.3;
+        touch-action: manipulation;
+        transition:
+          border-color 130ms ease,
+          color 130ms ease,
+          background 130ms ease,
+          transform 130ms ease;
+      }
+
+      .word-chip:hover {
+        transform: translateY(-1px);
+        border-color: #6d7f4e;
+        color: #fff;
+      }
+
+      .word-chip.is-favorite {
+        border-color: #9ec759;
+        background: var(--green-dark);
+        color: var(--green);
+        font-weight: 700;
+      }
+
+      .word-chip.is-favorite::before {
+        margin-right: 6px;
+        content: "★";
+        font-size: 10px;
+      }
+
+      .word-chip.is-removed {
+        border-color: #a64d4d;
+        background: #391f20;
+        color: #ff8585;
+      }
+
+      .empty-group {
+        margin: 0;
+        color: #777e74;
+        font-size: 13px;
+      }
+
+      .footer {
+        margin-top: 42px;
+        padding-top: 18px;
+        border-top: 1px solid var(--line);
+        color: #747a70;
+        font-size: 11px;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      @media (max-width: 560px) {
+        .page {
+          width: min(100% - 28px, 920px);
+          padding-top: 22px;
+        }
+
+        .topbar {
+          padding-bottom: 22px;
+        }
+
+        .hero {
+          margin-top: 52px;
+        }
+
+        .search-panel {
+          gap: 5px;
+          padding: 6px;
+        }
+
+        .search-input {
+          padding: 12px 10px;
+          font-size: 16px;
+        }
+
+        .search-button {
+          min-width: 98px;
+          padding: 0 12px;
+        }
+
+        .add-word-form {
+          max-width: none;
+        }
+
+        .word-group {
+          padding: 17px 15px 18px;
+        }
+
+        .topbar-note {
+          font-size: 11px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <!-- <header class="topbar">
+        <a class="brand" href="#" aria-label="Letterbox home">
+          <span class="brand-mark" aria-hidden="true">L</span>
+          <span>letterbox</span>
+        </a>
+        <span class="topbar-note">A little more wordplay</span>
+      </header> -->
+
+      <!-- <section class="hero" aria-labelledby="page-title">
+        <p class="eyebrow">Make the most of your letters</p>
+        <h1 id="page-title">Find your words.</h1>
+        <p class="intro">
+          Enter the letters you have and discover every word you can make, from
+          the longest down to three letters.
+        </p>
+      </section> -->
+
+      <form class="search-panel" id="word-form">
+        <input
+          class="search-input"
+          id="letters"
+          name="letters"
+          type="text"
+          placeholder="e.g. listen"
+          aria-label="Enter 3 to 10 letters"
+          autocomplete="off"
+          autocapitalize="none"
+          spellcheck="false"
+          minlength="3"
+          maxlength="10"
+          pattern="[A-Za-z]{3,10}"
+          title="Enter 3 to 10 letters, with no spaces or punctuation"
+          required
+        />
+        <button class="search-button" type="submit">
+          Find words <span aria-hidden="true">→</span>
+        </button>
+      </form>
+      <!-- <p class="hint">
+        3–10 letters · Enter to search · click once to save · double-click or
+        double-tap to move a word to the end
+      </p>
+      <p class="message" id="message" role="status" aria-live="polite">
+        Your words will appear here, grouped by length.
+      </p> -->
+
+      <section class="results" id="results" aria-label="Matching words" hidden>
+        <div class="results-heading">
+          <h2 id="results-title">Words you can make</h2>
+          <span class="results-count" id="results-count"></span>
+        </div>
+        <div id="word-groups"></div>
+        <form class="add-word-form" id="add-word-form">
+          <input
+            class="add-word-input"
+            id="add-word"
+            name="word"
+            type="text"
+            placeholder="Add a missing word"
+            aria-label="Add a missing word to these results"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+            maxlength="10"
+            pattern="[A-Za-z]{3,10}"
+            title="Enter a word of 3 to 10 letters that can be made from your search letters"
+            required
+          />
+          <button class="add-word-button" type="submit">Add as favorite</button>
+        </form>
+      </section>
+
+      <!-- <footer class="footer">
+        Click a word once to highlight it and move it to the front of future
+        results. Double-click or double-tap a word to move it to the end of its
+        group and mark it red; double-click it again to return it to the normal
+        order. Add missing words from the current letters and they will be saved
+        as favorites. These choices stay on this device. Dictionary:
+        an-array-of-english-words (MIT licensed; see LICENSE-words.txt).
+      </footer> -->
+    </main>
+
+    <script src="words.js"></script>
+    <script>
+      (() => {
+        const form = document.querySelector("#word-form");
+        const input = document.querySelector("#letters");
+        const addWordForm = document.querySelector("#add-word-form");
+        const addWordInput = document.querySelector("#add-word");
+        const message = document.querySelector("#message");
+        const results = document.querySelector("#results");
+        const resultsTitle = document.querySelector("#results-title");
+        const resultsCount = document.querySelector("#results-count");
+        const groupsElement = document.querySelector("#word-groups");
+        const favoriteStorageKey = "letterbox-favorites-v1";
+        const customWordsStorageKey = "letterbox-custom-words-v1";
+        const removedStorageKey = "letterbox-removed-words-v1";
+        const legacyHiddenStorageKey = "letterbox-hidden-words-v1";
+        const wordsByLength = new Map();
+        const wordClickTimers = new Map();
+        let favorites = new Set();
+        let customWords = new Set();
+        let removedWords = new Set();
+        let lastSearch = "";
+        let storageError = "";
+        let dictionaryReady = false;
+
+        function setMessage(text, isError = false) {
+          message.textContent = text;
+          message.dataset.error = String(isError);
+        }
+
+        function loadFavorites() {
+          try {
+            const stored = localStorage.getItem(favoriteStorageKey);
+            if (stored === null) return;
+
+            const parsed = JSON.parse(stored);
+            if (
+              !Array.isArray(parsed) ||
+              parsed.some(
+                (word) =>
+                  typeof word !== "string" || !/^[a-z]{3,10}$/.test(word),
+              )
+            ) {
+              throw new Error("Saved word data is not in the expected format.");
+            }
+            favorites = new Set(parsed);
+          } catch (error) {
+            storageError = error.message;
+            setMessage(
+              `Saved words could not be loaded: ${error.message}`,
+              true,
+            );
+          }
+        }
+
+        function saveFavorites() {
+          try {
+            localStorage.setItem(
+              favoriteStorageKey,
+              JSON.stringify([...favorites]),
+            );
+            return true;
+          } catch (error) {
+            storageError = error.message;
+            setMessage(`Saved words could not be stored: ${error.message}`, true);
+            return false;
+          }
+        }
+
+        function loadCustomWords() {
+          try {
+            const stored = localStorage.getItem(customWordsStorageKey);
+            if (stored === null) return;
+
+            const parsed = JSON.parse(stored);
+            if (
+              !Array.isArray(parsed) ||
+              parsed.some(
+                (word) =>
+                  typeof word !== "string" || !/^[a-z]{3,10}$/.test(word),
+              )
+            ) {
+              throw new Error("Custom word data is not in the expected format.");
+            }
+            customWords = new Set(parsed);
+          } catch (error) {
+            storageError = error.message;
+            setMessage(`Custom words could not be loaded: ${error.message}`, true);
+          }
+        }
+
+        function saveCustomWords() {
+          try {
+            localStorage.setItem(
+              customWordsStorageKey,
+              JSON.stringify([...customWords]),
+            );
+            return true;
+          } catch (error) {
+            storageError = error.message;
+            setMessage(`Custom words could not be stored: ${error.message}`, true);
+            return false;
+          }
+        }
+
+        function loadRemovedWords() {
+          try {
+            const stored =
+              localStorage.getItem(removedStorageKey) ??
+              localStorage.getItem(legacyHiddenStorageKey);
+            if (stored === null) return;
+
+            const parsed = JSON.parse(stored);
+            if (
+              !Array.isArray(parsed) ||
+              parsed.some(
+                (word) =>
+                  typeof word !== "string" || !/^[a-z]{3,10}$/.test(word),
+              )
+            ) {
+              throw new Error("Removed word data is not in the expected format.");
+            }
+            removedWords = new Set(parsed);
+          } catch (error) {
+            storageError = error.message;
+            setMessage(`Removed words could not be loaded: ${error.message}`, true);
+          }
+        }
+
+        function saveRemovedWords() {
+          try {
+            localStorage.setItem(
+              removedStorageKey,
+              JSON.stringify([...removedWords]),
+            );
+            return true;
+          } catch (error) {
+            storageError = error.message;
+            setMessage(`Removed words could not be stored: ${error.message}`, true);
+            return false;
+          }
+        }
+
+        function initializeDictionary() {
+          if (!Array.isArray(window.WORDS)) {
+            throw new Error("The bundled word list is missing or invalid.");
+          }
+          for (const word of window.WORDS) {
+            if (!/^[a-z]{3,10}$/.test(word)) continue;
+            const words = wordsByLength.get(word.length) || [];
+            words.push(word);
+            wordsByLength.set(word.length, words);
+          }
+        }
+
+        function wordFits(word, availableLetters) {
+          const used = new Map();
+          for (const letter of word) {
+            const count = (used.get(letter) || 0) + 1;
+            if (count > (availableLetters.get(letter) || 0)) return false;
+            used.set(letter, count);
+          }
+          return true;
+        }
+
+        function renderSearch(letters) {
+          const availableLetters = new Map();
+          for (const letter of letters) {
+            availableLetters.set(
+              letter,
+              (availableLetters.get(letter) || 0) + 1,
+            );
+          }
+
+          let totalMatches = 0;
+          groupsElement.replaceChildren();
+
+          for (let length = letters.length; length >= 3; length -= 1) {
+            const matches = [
+              ...new Set([
+                ...(wordsByLength.get(length) || []),
+                ...[...customWords].filter((word) => word.length === length),
+              ]),
+            ].filter((word) => wordFits(word, availableLetters));
+            matches.sort((a, b) => {
+              const removedOrder =
+                Number(removedWords.has(a)) - Number(removedWords.has(b));
+              if (removedOrder) return removedOrder;
+              const favoriteOrder =
+                Number(favorites.has(b)) - Number(favorites.has(a));
+              return favoriteOrder || (a < b ? -1 : a > b ? 1 : 0);
+            });
+            totalMatches += matches.length;
+
+            const group = document.createElement("section");
+            group.className = "word-group";
+            group.setAttribute("aria-labelledby", `group-${length}`);
+
+            const heading = document.createElement("div");
+            heading.className = "group-heading";
+            const title = document.createElement("h3");
+            title.id = `group-${length}`;
+            title.textContent = `${length} letters`;
+            const count = document.createElement("span");
+            count.className = "group-count";
+            count.textContent = `${matches.length} ${
+              matches.length === 1 ? "word" : "words"
+            }`;
+            heading.append(title, count);
+            group.append(heading);
+
+            if (matches.length === 0) {
+              const empty = document.createElement("p");
+              empty.className = "empty-group";
+              empty.textContent = "No words found.";
+              group.append(empty);
+            } else {
+              const wordList = document.createElement("div");
+              wordList.className = "word-list";
+              for (const word of matches) {
+                const entry = document.createElement("div");
+                entry.className = "word-entry";
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "word-chip";
+                chip.textContent = word;
+                chip.setAttribute("aria-label", word);
+                chip.setAttribute("aria-pressed", String(favorites.has(word)));
+                if (favorites.has(word)) chip.classList.add("is-favorite");
+                if (removedWords.has(word)) {
+                  chip.classList.add("is-removed");
+                  chip.setAttribute(
+                    "aria-description",
+                    "Moved to the end of its group. Double-click to restore its order.",
+                  );
+                }
+                chip.addEventListener("click", (event) =>
+                  handleWordClick(word, event),
+                );
+                entry.append(chip);
+                wordList.append(entry);
+              }
+              group.append(wordList);
+            }
+            groupsElement.append(group);
+          }
+
+          resultsTitle.textContent = `Words from “${letters}”`;
+          resultsCount.textContent = `${totalMatches} ${
+            totalMatches === 1 ? "word" : "words"
+          } found`;
+          results.hidden = false;
+          lastSearch = letters;
+          if (storageError) {
+            setMessage(
+              `Saved words are unavailable on this device: ${storageError}`,
+              true,
+            );
+          } else {
+            setMessage(
+              totalMatches
+                ? "Click once to save a word. Double-click or double-tap to move it to the end and mark it red."
+                : "No matching words found for those letters.",
+            );
+          }
+        }
+
+        function toggleFavorite(word) {
+          if (favorites.has(word)) {
+            favorites.delete(word);
+          } else {
+            favorites.add(word);
+          }
+          const saved = saveFavorites();
+          if (lastSearch) renderSearch(lastSearch);
+          if (!saved) {
+            setMessage(
+              "Your change is shown, but the saved word could not be stored on this device.",
+              true,
+            );
+          }
+        }
+
+        function handleWordClick(word, event) {
+          if (event.detail === 0) {
+            toggleFavorite(word);
+            return;
+          }
+
+          const pendingTimer = wordClickTimers.get(word);
+          if (pendingTimer !== undefined) {
+            window.clearTimeout(pendingTimer);
+            wordClickTimers.delete(word);
+            toggleRemovedWord(word);
+            return;
+          }
+
+          const timer = window.setTimeout(() => {
+            wordClickTimers.delete(word);
+            toggleFavorite(word);
+          }, 400);
+          wordClickTimers.set(word, timer);
+        }
+
+        function toggleRemovedWord(word) {
+          if (removedWords.has(word)) {
+            removedWords.delete(word);
+          } else {
+            removedWords.add(word);
+          }
+          const removed = removedWords.has(word);
+          const saved = saveRemovedWords();
+          if (lastSearch) renderSearch(lastSearch);
+          if (saved) {
+            setMessage(removed
+              ? `${word} moved to the end of its group and marked red.`
+              : `${word} restored to its normal group order.`);
+          } else {
+            setMessage(
+              `${word} was updated for now, but the change could not be saved for future visits.`,
+              true,
+            );
+          }
+        }
+
+        addWordForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          if (!dictionaryReady || !lastSearch) return;
+
+          const word = addWordInput.value.toLowerCase();
+          if (!/^[a-z]{3,10}$/.test(word)) {
+            setMessage("Enter a word made of 3 to 10 letters.", true);
+            addWordInput.focus();
+            return;
+          }
+
+          const availableLetters = new Map();
+          for (const letter of lastSearch) {
+            availableLetters.set(
+              letter,
+              (availableLetters.get(letter) || 0) + 1,
+            );
+          }
+          if (word.length > lastSearch.length || !wordFits(word, availableLetters)) {
+            setMessage(
+              `“${word}” cannot be made from the letters in “${lastSearch}”.`,
+              true,
+            );
+            addWordInput.focus();
+            return;
+          }
+
+          const alreadyInGroup =
+            wordsByLength.get(word.length)?.includes(word) ||
+            customWords.has(word);
+          if (alreadyInGroup) {
+            setMessage(`“${word}” is already in the ${word.length}-letter group.`);
+            addWordInput.focus();
+            return;
+          }
+
+          customWords.add(word);
+          favorites.add(word);
+          const customWordSaved = saveCustomWords();
+          const favoriteSaved = saveFavorites();
+          addWordInput.value = "";
+          renderSearch(lastSearch);
+          if (customWordSaved && favoriteSaved) {
+            setMessage(`“${word}” added to the ${word.length}-letter group as a favorite.`);
+          } else {
+            setMessage(
+              `“${word}” was added for now, but could not be saved for future visits.`,
+              true,
+            );
+          }
+        });
+
+        form.addEventListener("submit", (event) => {
+          event.preventDefault();
+          if (!dictionaryReady) return;
+          const letters = input.value.toLowerCase();
+          if (!/^[a-z]{3,10}$/.test(letters)) {
+            setMessage(
+              "Enter between 3 and 10 letters, with no spaces or punctuation.",
+              true,
+            );
+            input.focus();
+            return;
+          }
+          renderSearch(letters);
+        });
+
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Enter") {
+            event.preventDefault();
+            form.requestSubmit();
+          }
+        });
+
+        try {
+          initializeDictionary();
+          loadFavorites();
+          loadCustomWords();
+          loadRemovedWords();
+          dictionaryReady = true;
+        } catch (error) {
+          form.querySelector("button").disabled = true;
+          setMessage(`Word finder could not start: ${error.message}`, true);
+        }
+      })();
+    </script>
+  </body>
+</html>
