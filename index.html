@@ -165,6 +165,27 @@
           transform 140ms ease;
       }
 
+      .clear-button {
+        display: grid;
+        width: 42px;
+        min-width: 42px;
+        padding: 0;
+        place-items: center;
+        border: 1px solid #343a32;
+        border-radius: 12px;
+        background: #202420;
+        color: #b7bdb2;
+        cursor: pointer;
+        font-size: 21px;
+        line-height: 1;
+      }
+
+      .clear-button:hover {
+        border-color: #687e46;
+        background: #272d25;
+        color: #f1f3ed;
+      }
+
       .search-button:hover {
         transform: translateY(-1px);
         background: #d3f891;
@@ -175,6 +196,7 @@
         opacity: 0.55;
       }
 
+      .clear-button:focus-visible,
       .search-button:focus-visible,
       .word-chip:focus-visible {
         outline: 2px solid #fff;
@@ -450,6 +472,15 @@
           title="Enter 3 to 10 letters, with no spaces or punctuation"
           required
         />
+        <button
+          class="clear-button"
+          id="clear-letters"
+          type="button"
+          aria-label="Clear letters and focus input"
+          title="Clear letters and enter new ones"
+        >
+          <span aria-hidden="true">↻</span>
+        </button>
         <button class="search-button" type="submit">
           Find words <span aria-hidden="true">→</span>
         </button>
@@ -503,6 +534,7 @@
       (() => {
         const form = document.querySelector("#word-form");
         const input = document.querySelector("#letters");
+        const clearButton = document.querySelector("#clear-letters");
         const addWordForm = document.querySelector("#add-word-form");
         const addWordInput = document.querySelector("#add-word");
         const message = document.querySelector("#message");
@@ -888,6 +920,11 @@
             return;
           }
           renderSearch(letters);
+        });
+
+        clearButton.addEventListener("click", () => {
+          input.value = "";
+          input.focus();
         });
 
         input.addEventListener("keydown", (event) => {
