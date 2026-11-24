@@ -279,6 +279,32 @@
         color: #73796e;
       }
 
+      .refresh-words-button {
+        width: 100%;
+        padding: 10px 16px;
+        margin: 16px 0 4px;
+        border: 1px solid #52653a;
+        border-radius: 10px;
+        background: var(--green-dark);
+        color: var(--green);
+        font-size: 13px;
+        font-weight: 650;
+        cursor: pointer;
+        transition:
+          border-color 130ms ease,
+          background 130ms ease,
+          transform 130ms ease;
+      }
+
+      .refresh-words-button:hover {
+        border-color: #9ec759;
+        background: #2b3c21;
+      }
+
+      .refresh-words-button:active {
+        transform: translateY(0);
+      }
+
       .add-word-button {
         padding: 0 13px;
         border: 1px solid #52653a;
@@ -293,6 +319,55 @@
       .add-word-button:hover {
         border-color: #9ec759;
         background: #2b3c21;
+      }
+
+      .hotkey-legend {
+        margin-top: 20px;
+        padding: 14px 16px;
+        border: 1px solid #343a32;
+        border-radius: 12px;
+        background: #191d19;
+      }
+
+      .hotkey-legend h3 {
+        margin: 0 0 10px;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        text-transform: uppercase;
+        color: #c4f06b;
+      }
+
+      .hotkey-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 8px 16px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .hotkey-item {
+        display: flex;
+      }
+
+      .hotkey-key {
+        flex-shrink: 0;
+        width: 100px;
+        padding: 4px 8px;
+        border: 1px solid #343a32;
+        border-radius: 6px;
+        background: #171a17;
+        color: #c4f06b;
+        font-family: monospace;
+        font-size: 11.5px;
+        text-align: center;
+        user-select: none;
+      }
+
+      .hotkey-desc {
+        flex: 1;
+        padding-left: 12px;
+        color: #d7ddd4;
       }
 
       .word-group {
@@ -328,10 +403,38 @@
         gap: 8px;
       }
 
+      .words-split {
+        display: flex;
+        gap: 16px;
+        margin-top: 8px;
+      }
+
+      .words-left {
+        flex: 3;
+        min-width: 0;
+      }
+
+      .words-right {
+        flex: 1;
+        min-width: 0;
+        border-left: 1px solid var(--line);
+        padding-left: 16px;
+      }
+
+      .words-right .word-list {
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
       .word-entry {
         display: inline-flex;
         align-items: center;
         gap: 3px;
+      }
+
+      .word-chip:focus-visible {
+        outline: 2px solid #60a5fa;
+        outline-offset: 2px;
       }
 
       .word-chip {
@@ -366,6 +469,31 @@
       }
 
       .word-chip.is-favorite::before {
+        margin-right: 6px;
+        content: "★";
+        font-size: 10px;
+      }
+
+      .word-chip.is-half-word::before {
+        margin-right: 6px;
+        content: "◇";
+        font-size: 10px;
+      }
+
+      .word-chip.is-half-word {
+        border-color: #f59e0b;
+        background: #5e490b;
+        color: #f8c829;
+      }
+
+      .word-chip.is-one-time-favorite {
+        border-color: #c084fc;
+        background: #43145f;
+        color: #f0abfc;
+        font-weight: 700;
+      }
+
+      .word-chip.is-one-time-favorite::before {
         margin-right: 6px;
         content: "★";
         font-size: 10px;
@@ -499,6 +627,9 @@
           <span class="results-count" id="results-count"></span>
         </div>
         <div id="word-groups"></div>
+        <button class="refresh-words-button" id="refresh-words" type="button" aria-label="Clear letters and enter new ones">
+          <span aria-hidden="true">↻</span> Enter new letters
+        </button>
         <form class="add-word-form" id="add-word-form">
           <input
             class="add-word-input"
@@ -517,12 +648,30 @@
           />
           <button class="add-word-button" type="submit">Add as favorite</button>
         </form>
+
+        <aside class="hotkey-legend" aria-label="Keyboard hotkeys">
+          <h3>Keyboard hotkeys</h3>
+          <div class="hotkey-grid">
+            <div class="hotkey-item"><span class="hotkey-key">Enter</span><span class="hotkey-desc">Search; press twice to enter new letters</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">→</span><span class="hotkey-desc">Next word chip</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">←</span><span class="hotkey-desc">Previous word chip</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">↓</span><span class="hotkey-desc">Next shorter word group</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">↑</span><span class="hotkey-desc">Next longer word group</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Space ×1</span><span class="hotkey-desc">Toggle favorite on focused word</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Space ×2</span><span class="hotkey-desc">Move focused word to the end and mark it red</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Shift ×2</span><span class="hotkey-desc">Toggle the half-word mark</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Click</span><span class="hotkey-desc">Single-click a word to favorite it</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Double-click / double-tap</span><span class="hotkey-desc">Move word to the end and mark it red</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Triple-click / triple-tap</span><span class="hotkey-desc">Toggle the half-word mark</span></div>
+          </div>
+        </aside>
       </section>
 
       <!-- <footer class="footer">
         Click a word once to highlight it and move it to the front of future
         results. Double-click or double-tap a word to move it to the end of its
-        group and mark it red; double-click it again to return it to the normal
+        group and mark it red; triple-click or triple-tap it to toggle the
+        half-word mark. Double-click it again to return it to the normal
         order. Add missing words from the current letters and they will be saved
         as favorites. These choices stay on this device. Dictionary:
         an-array-of-english-words (MIT licensed; see LICENSE-words.txt).
@@ -531,7 +680,7 @@
 
     <script src="words.js"></script>
     <script>
-      (() => {
+      (async () => {
         const form = document.querySelector("#word-form");
         const input = document.querySelector("#letters");
         const clearButton = document.querySelector("#clear-letters");
@@ -545,12 +694,15 @@
         const favoriteStorageKey = "letterbox-favorites-v1";
         const customWordsStorageKey = "letterbox-custom-words-v1";
         const removedStorageKey = "letterbox-removed-words-v1";
+        const halfWordsStorageKey = "letterbox-half-words-v1";
         const legacyHiddenStorageKey = "letterbox-hidden-words-v1";
         const wordsByLength = new Map();
         const wordClickTimers = new Map();
         let favorites = new Set();
         let customWords = new Set();
         let removedWords = new Set();
+        let halfWords = new Set();
+        let oneTimeFavorite = new Set();
         let lastSearch = "";
         let storageError = "";
         let dictionaryReady = false;
@@ -673,6 +825,54 @@
           }
         }
 
+        function loadHalfWords() {
+          try {
+            const stored = localStorage.getItem(halfWordsStorageKey);
+            if (stored === null) return;
+
+            const parsed = JSON.parse(stored);
+            if (
+              !Array.isArray(parsed) ||
+              parsed.some(
+                (word) =>
+                  typeof word !== "string" || !/^[a-z]{3,10}$/.test(word),
+              )
+            ) {
+              throw new Error("Half-word data is not in the expected format.");
+            }
+            halfWords = new Set(parsed);
+          } catch (error) {
+            storageError = error.message;
+            setMessage(`Half-words could not be loaded: ${error.message}`, true);
+          }
+        }
+
+        function saveHalfWords() {
+          try {
+            localStorage.setItem(
+              halfWordsStorageKey,
+              JSON.stringify([...halfWords]),
+            );
+            return true;
+          } catch (error) {
+            storageError = error.message;
+            setMessage(`Half-words could not be stored: ${error.message}`, true);
+            return false;
+          }
+        }
+
+        const defaultFavorites = ["lions","sin","son","oil","soil","quantum","autumn","aunt","tuna","tan","ant","man","nut","mat","coward","crowd","card","crow","draw","road","word","ward","cord","car","cod","rod","raw","war","cow","row","alleged","eagle","ledge","legal","aged","deal","edge","glad","lead","adjust","ads","dust","just","sad","sat","acclaim","claim","calm","clam","mail","aim","cam","broken","broke","bone","bore","born","robe","knob","rob","one","ore","relieve","liver","lever","ever","evil","vile","veil","eve","lie","waves","wave","save","vase","saw","sea","sew","was","awe","rightly","light","right","girl","hit","rig","try","lit","pushed","push","shed","used","sued","due","she","sue","hue","use","fiction","tonic","coin","icon","into","info","font","not","con","fit","tin","ton","slowly","lows","owls","slow","low","sow","soy","owl","privacy","piracy","airy","pray","vary","system","messy","mess","sets","stem","set","yet","yes","met","acidity","acid","city","tidy","act","aid","cat","day","icy","people","peel","peep","pole","pope","pop","members","member","bees","beer","see","mere","seem","bee","seer","arena","area","earn","near","are","ear","era","ran","halfway","half","away","flaw","flay","fly","hay","lay","why","way","law","analog","along","loan","goal","long","log","lag","ago","rooftop","proof","troop","foot","poor","port","roof","root","for","pro","top","rot","pot","opt","backed","baked","back","bake","cake","bead","deck","ace","bed","bad","cab","beak","dab","statute","statue","state","taste","east","seat","teas","test","stat","eats","bitter","tribe","bite","tier","tire","bet","bit","rib","tie","ongoing","going","onion","noon","gin","gig","inn","juicer","juice","cure","rice","cue","ice","rue","neglect","gentle","elect","gene","teen","cent","gel","let","net","ten","get","leg","parks","spark","park","rap","spa","ask","blindly","blind","billy","bill","bind","bid","bin","lid","lily","zipper","prize","pier","pipe","ripe","per","pie","zip","rip","sandals","salsa","salad","sand","land","and","fisher","fries","fresh","fire","heir","hers","fish","hire","his","her","rise","sir","though","through","tough","rough","ought","hour","hurt","tour","hut","hot","hog","gut","out","our","rug","tug","rout","solemn","lemon","melon","nose","mole","lose","lens","sole","some","lone","men","customs","custom","scout","cost","most","must","toss","costs","sum","sums","cut","cuts","dimmer","dire","ride","dime","dim","red","rid","mid","blossom","bloom","boss","solo","lob","knees","knee","keen","seen","seek","sarcasm","arms","cars","mass","scar","scam","cams","mars","ram","arm","unlike","like","line","link","ink","kin","evolved","evolve","loved","love","dove","old","led","doe","fallen","fall","fell","lane","leaf","lean","all","elf","fan","ale","package","cage","cape","pace","pack","page","peak","peck","rocket","coke","core","cork","rock","toe","arrival","viral","rival","lava","liar","rail","vial","air","shaft","fast","fats","hats","fat","hat","has","ash","vitamin","main","mini","mint","vain","van","games","ages","game","gems","mega","same","seam","sage","gem","age","gas","cowboys","cowboy","bow","boys","cows","cob","brewer","brew","were","web","texture","exert","utter","true","text","tree","tux","stitch","hits","itch","this","sit","factory","crafty","factor","actor","craft","forty","coat","cart","fact","taco","raft","frat","tray","salary","lays","rays","sly","ray","say","educate","acted","deuce","acute","cute","date","duet","tea","ate","eat","awaken","awake","knew","wake","weak","new","raccoon","acorn","corn","cocoa","can","pound","pond","undo","upon","nod","duo","pun","pod","sketchy","sketch","chest","they","tech","shy","sky","the","keys","key","social","coils","also","coal","coil","cola","oils","sail","mince","niche","chin","inch","mice","mine","nice","hen","him","decree","recede","creed","deer","reed","surgery","surge","urges","rugs","user","urge","guys","sure","dean","den","end","useless","uses","sues","else","less","sees","warmth","harm","math","warm","what","rat","art","ham","sensing","signs","sign","sing","sings","nine","turns","nuts","runs","rust","turn","run","stun","sun","emperor","more","peer","poem","pore","prom","rope","mop","spoken","spoke","opens","open","nope","pens","pose","poke","pen","tulip","culprit","clip","curl","trip","cult","pit","put","lip","cup","tip","table","able","beat","belt","beta","late","teal","tale","bat","tab","lab","appoint","paint","patio","piano","point","pain","pint","atop","pita","invite","vine","vent","vein","vocal","volcano","cool","oval","clan","nova","feel","free","reel","reef","flex","fee","outfits","outfit","fist","fits","soft","suit","model","demo","dome","mode","mold","meld","shadows","shadow","dash","wash","sows","soda","show","saws","shows","who","how","had","became","beam","came","mace","applaud","dual","papa","lap","app","pad","pal","costly","lots","lost","toys","slot","toy","lot","carrier","racer","acre","care","race","rare","rear","rehab","bare","bear","hare","hear","herb","bar","bra","attacks","attack","stack","acts","cast","cats","sack","tack","task","orchid","choir","chord","rich","hid","hallway","ally","hall","wall","smile","miles","slime","isle","lies","mile","lime","semi","slim","those","hottest","hose","host","shoe","toes","shot","closer","close","score","roles","role","rose","sore","cello","colonel","clone","cell","once","cone","newbie","been","wine","win","primary","marry","army","pair","ramp","pinkie","pink","pine","pike","pin","scenery","screen","scene","eyes","cry","eye","rye","visitor","visit","visor","rots","sort","stir","iris","trio","snoopy","snoop","spoon","soon","pony","nosy","spy","rupture","pure","peace","ape","cap","pea","luckily","lucky","kill","luck","lick","attain","titan","tint","taint","plywood","loop","ploy","polo","poly","pool","wood","wool","ply","orphan","apron","harp","horn","nap","hop","pan","however","whoever","where","hero","here","over","rove","wore","afraid","fair","raid","pledged","pledge","deep","deed","decent","need","dent","tend","longing","lion","login","armed","dream","dear","made","mare","read","dare","mad","dam","mead","confirm","inform","minor","micro","from","form","iron","firm","norm","voiced","video","voice","code","cove","dice","iced","void","dive","vice","suggest","guests","guest","guess","eggs","gets","egg","astral","atlas","last","rats","star","salt","footage","fate","gate","goat","feat","false","safe","sale","seal","self","become","becomes","comes","comb","come","bottle","bolt","lobe","bot","workout","rook","took","two","work","skins","inks","kiss","sink","skin","anemone","mane","mean","moan","none","neon","name","ache","acne","cane","each","chance","stylish","lists","list","sits","humble","blue","mule","hub","hum","compact","atom","camp","pact","faulty","fault","flat","flu","magical","magic","splash","slash","laps","pals","slap","spas","pass","lash","enquiry","query","ruin","rein","meter","term","meet","pricing","grin","grip","ping","ring","pig","couple","clue","cope","cop","follows","follow","flows","fools","flow","fool","wolf","horses","horse","roses","shoes","shore","athlete","latte","teeth","halt","hate","heal","heat","heel","that","grand","drag","grad","rang","freebie","brief","fiber","beef","spices","spies","spice","epic","pies","spec","sip","doorway","door","yard","dry","found","fond","fund","fun","columns","column","cons","slum","soul","fitted","diet","edit","tied","tide","fed","illness","lines","sell","ocular","carol","coral","tighten","eight","hinge","night","thing","tight","hint","tent","then","thin","tanks","ants","sank","tank","exhibit","exit","stormy","storm","story","program","armor","gram","roam","roar","gap","map","stern","nest","nets","rent","rest","sent","dresser","dress","seed","called","laced","call","lace","dignity","digit","tying","tiny","dig","lounge","lunge","glue","lung","gone","ego","gun","runners","runner","nurse","grave","gave","gear","rage","rave","claw","dial","laid","tail","wait","wild","wit","creepy","creep","affairs","affair","safari","fairs","airs","far","exams","axes","exam","axe","max","cynical","clay","nail","any","bodies","beds","bids","side","does","dose","bio","balloon","ball","ban","nab","abacus","scuba","cubs","bus","cub","abs","unaware","aware","warn","wear","aura","simply","imply","limp","lips","slip","cricket","trick","kite","cite","tick","kit","ocelot","tool","loot","sashimi","smash","aims","mash","miss","aloud","loud","load","systems","depend","ended","hopeful","flop","fuel","hope","help","hole","foul","about","auto","boat","tuba","but","oat","tub","project","crop","poet","grudge","rugged","urged","drug","rude","billed","bell","idle","lied","deli","speaks","peaks","speak","asks","peas","sake","apes","seas","offense","fees","front","torn","zombies","zombie","size","meadow","owed","wed","nirvana","rain","remove","move","connect","note","tone","satisfy","says","stay","marker","remark","maker","mark","rake","teenage","agent","eaten","neat","tag","puppies","valley","vale","veal","yell","alley","pronoun","noun","pour","whereby","hereby","bye","pitch","chip","hip","rigidly","rigid","grid","finance","canine","cafe","face","fine","exclude","deluxe","excel","duel","floss","soils","loss","foil","mailman","animal","mama","concord","condo","donor","shade","heads","head","gain","guns","sang","scan","using","vehicle","chive","live","hive","widen","wide","wind","dine","reflect","fleet","feet","felt","left","toddler","older","lord","told","rode","paprika","sticky","stick","kits","sick","skit","ski","trumpet","mute","pet","rum","fortify","fifty","rift","fry","off","savory","savor","brokers","broker","sober","walkway","walk","tart","tract","welcome","jealous","convict","quotes","quote","quest","granola","organ","sellers","seller","resell","invoke","oven","snowman","woman","swan","snow","owns","swam","won","mow","own","now","quietly","equity","quiet","quilt","quit","quite","tile","hurts","shut","thus","rush","huts","sheriff","rainbow","brown","robin","brain","worn","barn","brow","boar","forward","arrow","dwarf","bleach","cable","beach","divider","divide","diver","dried","drive","did","handbag","band","hand","hang","behold","hold","bold","held","mascara","biscuit","bits","bust","tubs","bears","bars","ears","base","running","rung","nun","thirsty","thirst","thirty","shirt","villain","villa","robots","boots","boost","robot","roots","boot","bots","quicker","quick","engaged","engage","gang","thrash","trash","hash","rash","harsh","peacock","oak","popular","polar","prop","even","imitate","item","mate","meat","team","time","emit","tame","publish","blush","hips","ship","plus","hubs","bush","pubs","benches","bench","hence","sheen","pointy","typo","pity","analyze","lazy","excerpt","except","expect","expert","seaman","names","means","sane","catalog","got","radical","snob","elderly","elder","lyre","rely","traffic","tariff","stuffed","stuff","fuse","fourth","fur","turf","ceiling","sibling","sling","bins","big","impose","poems","poise","unblock","unlock","block","buck","bulk","bunk","club","lock","bun","revolve","lover","daisy","days","said","swiftly","swift","lift","passion","pins","naps","snap","sips","sins","snip","soap","span","spin","pans","sons","checkup","check","decode","odd","pilgrim","nurture","return","untrue","tuner","tune","thrive","their","nominee","drop","prod","harmful","mural","haul","farm","mankind","maid","kind","mind","amid","sirloin","career","whipped","wiped","hide","whip","wipe","dip","loyalty","alloy","loyal","tall","toll","debate","beet","debt","selfish","flesh","shelf","files","flies","file","life","hacking","chain","king","crosses","scores","cross","shortly","short","holy","jersey","jerseys","refine","infer","finer","museums","museum","muse","dazzle","daze","temple","melt","mailbag","limb","lamb","bail","bag","seafood","foods","deaf","fade","food","sofa","than","bulldog","blog","bull","doll","dull","gold","gull","dog","bug","god","dug","payable","play","leap","plea","pale","cyclone","cycle","only","trial","trail","ultra","shampoo","hoop","hops","mops","spam","shop","mosh","maps","sunburn","burns","buns","burn","rubs","gender","edger","genre","greed","green","grandma","drama","choices","choice","chose","idea","dead","aided","dad","die","add","nothing","brother","bother","broth","other","retro","both","finally","final","fail","fill","empire","prime","loosely","loose","solely","driving","diving","riding","grind","weaker","week","studios","studio","suits","dots","dot","swimmer","swim","wise","wire","wiser","went","deepest","speed","steep","step","pets","pest","exactly","cleat","exact","exalt","policy","copy","oily","culture","cruel","cuter","lure","rule","seasons","season","knives","veins","tattoos","toast","tattoo","oats","orchard","chard","hard","arch","cheat","teach","chat","reverb","verb","booklet","look","gazelle","glaze","gaze","exited","modeled","molded","deem","rector","correct","claims","slam","buffalo","bluff","loaf","jogging","join","jog","fairy","unused","dune","dues","ends","send","analyst","salty","twitch","witch","with","spleen","sleep","specify","spicy","upwards","upward","wrap","wasp","wars","warp","spud","spur","pads","paw","swap","popcorn","rubbery","rubber","berry","buyer","ruby","bury","buy","rub","terms","critics","critic","diamond","domain","humanly","human","manly","many","may","glossy","gloss","logs","honor","horizon","rhino","zoo","pitiful","uplift","flip","entity","sunroof","sour","surf","typhoon","python","photon","hoot","toon","cheered","cheer","herd","curtain","incur","train","unit","hygiene","worlds","words","world","sword","rows","sold","inbound","bound","union","bond","appeal","apple","rewrite","retire","write","concave","canoe","ocean","start","weighed","hedge","wedge","weigh","wig","walking","align","wink","wing","wail","lawn","plugged","glued","plug","atomic","omit","sausage","usage","gases","forgery","forge","fryer","ferry","frog","voted","veto","vote","refugee","refuge","cardiac","famed","inches","since","shine","shin","quarter","rate","tear","terra","fallacy","calf","fixer","prefix","fix","logging","textile","elite","title","exile","tilt","napkin","sleeves","sleeve","vessel","chuckle","trend","manuals","manual","agree","average","verge","eager","runaway","runway","yawn","yarn","thanks","monkeys","money","smoke","smoky","monk","sides","missed","comet","compete","tempo","real","earl","aces","case","caps","explore","repel","offbeat","pods","opposed","oppose","shifty","shift","fog","forming","boil","limo","mix","mailbox","blur","lumber","rumble","pull","pill","null","circles","circle","slicer","cries","slice","valid","diva","cook","cooking","bent","benefit","grammar","gamma","harbor","lengthy","length","gently","scandal","sandal","canal","fold","unfold","dye","delay","delayed","doctors","doctor","doors","bribed","bride","bribe","bred","bird","queens","queen","digs","disgust","analogy","agony","yoga","lovers","solver","solve","ottoman","tomato","motto","moon","smiling","dart","draft","fenced","fence","feed","genetic","niece","commune","ounce","memo","menu","mom","ranger","anger","range","unknown","known","know"];
+        const defaultRemoved = ["linos","noils","muntu","utu","amu","mna","nam","qat","qua","dowar","draco","alledge","acai","hes","crap","mets","leep","meer","anal","saut","par","scum","bool","neal","apage","capa","paca","peag","treck","cert","kero","reck","roke","tock","toke","eco","erk","ket","kor","oke","orc","reo","ort","ret","roc","tec","toc","teer","tex","shit","tits","fract","fart","gurs","seel","rore","clit","pur","lomed","lome","dows","hads","hoss","embace","dap","whore","leed","deen","cide","cive","fagot","outro","lits","rine","loof","loos","oofs","sool","sowf","sowl","wofs","los","oof","oos","wof","wos","hoer","hore","hors","oses","rehs","reos","rhos","sers","sesh","sohs","ehs","ers","ess","oes","ohs","ors","ose","reh","soh","sos","eale","etat","ethe","hele","hete","tael","tath","teel","telt","tete","teth","thae","darg","darn","nard","ard","dag","dan","gan","bere","brei","feer","fier","frib","reif","erf","fir","ree","rei","rif","pise","piss","psis","seps","sice","sics","sies","sipe","spic","spie","cep","cis","pes","pis","sei","woody","adry","arow","drow","oary","orad","wady","ary","daw","doo","dor","dow","doy","oda","oor","ora","ord","roo","rya","wad","yad","yar","yow","doun","foud","dof","dun","fon","fou","fud","udo","ufo","clou","coms","cums","loun","lous","mols","mous","muns","muon","muso","noul","olms","scul","soum","cos","cum","lou","lum","moc","mou","mun","nus","olm","oms","ons","ous","soc","som","ums","uns","deif","ditt","fett","fitt","tift","tite","dei","dif","eft","fet","fid","ide","tef","tet","tid","tit","nies","nill","seil","sels","sens","sien","sile","ell","els","ens","lis","nie","nis","sel","alco","cour","roul","urao","alu","cru","cur","lar","lor","lur","oca","ruc","geit","hing","tein","thig","tige","kants","kans","kant","nats","sant","skat","taks","ans","ats","kas","kat","nas","nat","san","tak","tas","tsk","eth","het","tix","mors","moys","orts","rost","somy","moy","oys","yom","gapo","gora","marg","ogam","orra","pram","prao","proa","roma","apo","goa","gor","moa","mog","poa","rens","erst","rets","ern","est","ren","tes","dee","sed","ered","eres","eses","esse","serr","sese","ecad","sex","nob","yests","porno","porn","terf","nown","lifes","enfire","virgin","nudes","devot"];
+
+        function seedDefaults() {
+          if (!localStorage.getItem(favoriteStorageKey)) {
+            localStorage.setItem(favoriteStorageKey, JSON.stringify(defaultFavorites));
+          }
+          if (!localStorage.getItem(removedStorageKey)) {
+            localStorage.setItem(removedStorageKey, JSON.stringify(defaultRemoved));
+          }
+        }
+
         function initializeDictionary() {
           if (!Array.isArray(window.WORDS)) {
             throw new Error("The bundled word list is missing or invalid.");
@@ -696,6 +896,8 @@
         }
 
         function renderSearch(letters) {
+          oneTimeFavorite.clear();
+
           const availableLetters = new Map();
           for (const letter of letters) {
             availableLetters.set(
@@ -720,9 +922,24 @@
               if (removedOrder) return removedOrder;
               const favoriteOrder =
                 Number(favorites.has(b)) - Number(favorites.has(a));
-              return favoriteOrder || (a < b ? -1 : a > b ? 1 : 0);
+              if (favoriteOrder) return favoriteOrder;
+              const halfOrder =
+                Number(halfWords.has(b)) - Number(halfWords.has(a));
+              return halfOrder || (a < b ? -1 : a > b ? 1 : 0);
             });
             totalMatches += matches.length;
+
+            if (length === letters.length && matches.length === 1) {
+              const onlyLongest = matches[0];
+              oneTimeFavorite.add(onlyLongest);
+              if (!favorites.has(onlyLongest)) {
+                favorites.add(onlyLongest);
+                saveFavorites();
+              }
+            }
+
+            const kept = matches.filter((word) => !removedWords.has(word));
+            const removed = matches.filter((word) => removedWords.has(word));
 
             const group = document.createElement("section");
             group.className = "word-group";
@@ -741,15 +958,21 @@
             heading.append(title, count);
             group.append(heading);
 
-            if (matches.length === 0) {
+            const split = document.createElement("div");
+            split.className = "words-split";
+
+            const left = document.createElement("div");
+            left.className = "words-left";
+
+            if (kept.length === 0) {
               const empty = document.createElement("p");
               empty.className = "empty-group";
               empty.textContent = "No words found.";
-              group.append(empty);
+              left.append(empty);
             } else {
               const wordList = document.createElement("div");
               wordList.className = "word-list";
-              for (const word of matches) {
+              for (const word of kept) {
                 const entry = document.createElement("div");
                 entry.className = "word-entry";
                 const chip = document.createElement("button");
@@ -758,13 +981,12 @@
                 chip.textContent = word;
                 chip.setAttribute("aria-label", word);
                 chip.setAttribute("aria-pressed", String(favorites.has(word)));
-                if (favorites.has(word)) chip.classList.add("is-favorite");
-                if (removedWords.has(word)) {
-                  chip.classList.add("is-removed");
-                  chip.setAttribute(
-                    "aria-description",
-                    "Moved to the end of its group. Double-click to restore its order.",
-                  );
+                if (oneTimeFavorite.has(word)) {
+                  chip.classList.add("is-one-time-favorite");
+                } else if (favorites.has(word)) {
+                  chip.classList.add("is-favorite");
+                } else if (halfWords.has(word)) {
+                  chip.classList.add("is-half-word");
                 }
                 chip.addEventListener("click", (event) =>
                   handleWordClick(word, event),
@@ -772,8 +994,46 @@
                 entry.append(chip);
                 wordList.append(entry);
               }
-              group.append(wordList);
+              left.append(wordList);
             }
+
+            const right = document.createElement("div");
+            right.className = "words-right";
+
+            if (removed.length === 0) {
+              const empty = document.createElement("p");
+              empty.className = "empty-group";
+              empty.style.margin = "0";
+              empty.textContent = "—";
+              right.append(empty);
+            } else {
+              const wordList = document.createElement("div");
+              wordList.className = "word-list";
+              for (const word of removed) {
+                const entry = document.createElement("div");
+                entry.className = "word-entry";
+                const chip = document.createElement("button");
+                chip.type = "button";
+                chip.className = "word-chip";
+                chip.textContent = word;
+                chip.setAttribute("aria-label", word);
+                chip.setAttribute("aria-pressed", String(favorites.has(word)));
+                chip.classList.add("is-removed");
+                chip.setAttribute(
+                  "aria-description",
+                  "Moved to the end of its group. Double-click to restore its order.",
+                );
+                chip.addEventListener("click", (event) =>
+                  handleWordClick(word, event),
+                );
+                entry.append(chip);
+                wordList.append(entry);
+              }
+              right.append(wordList);
+            }
+
+            split.append(left, right);
+            group.append(split);
             groupsElement.append(group);
           }
 
@@ -819,19 +1079,41 @@
             return;
           }
 
-          const pendingTimer = wordClickTimers.get(word);
-          if (pendingTimer !== undefined) {
-            window.clearTimeout(pendingTimer);
-            wordClickTimers.delete(word);
-            toggleRemovedWord(word);
+          const pendingClick = wordClickTimers.get(word);
+          if (pendingClick) {
+            window.clearTimeout(pendingClick.timer);
+            pendingClick.count = Math.min(pendingClick.count + 1, 3);
+            pendingClick.timer = window.setTimeout(() => {
+              wordClickTimers.delete(word);
+              if (pendingClick.count === 2) {
+                toggleRemovedWord(word);
+              } else if (pendingClick.count >= 3) {
+                toggleHalfWord(word);
+              }
+            }, 400);
             return;
           }
 
-          const timer = window.setTimeout(() => {
+          const clickState = { count: 1, timer: null };
+          clickState.timer = window.setTimeout(() => {
             wordClickTimers.delete(word);
             toggleFavorite(word);
           }, 400);
-          wordClickTimers.set(word, timer);
+          wordClickTimers.set(word, clickState);
+        }
+
+        function toggleHalfWord(word) {
+          if (halfWords.has(word)) {
+            halfWords.delete(word);
+          } else {
+            halfWords.add(word);
+          }
+          const isHalfWord = halfWords.has(word);
+          const saved = saveHalfWords();
+          if (lastSearch) renderSearch(lastSearch);
+          setMessage(saved
+            ? `${word} ${isHalfWord ? "marked as a half-word" : "removed from the half-word list"}.`
+            : `${word} was updated for now, but the half-word mark could not be saved for future visits.`, !saved);
         }
 
         function toggleRemovedWord(word) {
@@ -920,6 +1202,7 @@
             return;
           }
           renderSearch(letters);
+          input.blur();
         });
 
         clearButton.addEventListener("click", () => {
@@ -927,18 +1210,191 @@
           input.focus();
         });
 
+        const refreshButton = document.querySelector("#refresh-words");
+        refreshButton.addEventListener("click", () => {
+          input.value = "";
+          input.focus();
+        });
+
+        let enterTimer = null;
         input.addEventListener("keydown", (event) => {
           if (event.key === "Enter") {
             event.preventDefault();
-            form.requestSubmit();
+            if (enterTimer !== null) {
+              window.clearTimeout(enterTimer);
+              enterTimer = null;
+              refreshButton.click();
+            } else {
+              enterTimer = window.setTimeout(() => {
+                enterTimer = null;
+                form.requestSubmit();
+                input.blur();
+              }, 300);
+            }
+          }
+        });
+
+        let focusedWordIndex = -1;
+        let spaceTimer = null;
+        let shiftTimer = null;
+        let pendingShiftWord = "";
+
+        document.addEventListener("keydown", (event) => {
+          if (!lastSearch) return;
+
+          const active = document.activeElement;
+          if (active === input || active.tagName === "INPUT" || active.tagName === "TEXTAREA") return;
+
+          const chips = document.querySelectorAll("#word-groups .word-chip");
+          if (chips.length === 0) return;
+
+          if (event.key === "ArrowRight") {
+            event.preventDefault();
+            if (focusedWordIndex === -1) {
+              focusedWordIndex = 0;
+            } else if (focusedWordIndex < chips.length - 1) {
+              focusedWordIndex++;
+            }
+            chips[focusedWordIndex].focus();
+          } else if (event.key === "ArrowLeft") {
+            event.preventDefault();
+            if (focusedWordIndex === -1) {
+              focusedWordIndex = chips.length - 1;
+            } else if (focusedWordIndex > 0) {
+              focusedWordIndex--;
+            }
+            chips[focusedWordIndex].focus();
+          } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+            event.preventDefault();
+
+            const groups = document.querySelectorAll("#word-groups .word-group");
+            if (groups.length === 0) return;
+
+            const allChips = Array.from(document.querySelectorAll("#word-groups .word-chip"));
+
+            function findRegularChipInGroup(group) {
+              return Array.from(group.querySelectorAll(".word-chip")).find((chip) => {
+                const word = chip.textContent;
+                return !favorites.has(word) && !removedWords.has(word);
+              });
+            }
+
+            function getGroupIndex(chip) {
+              let el = chip;
+              while (el && !el.classList.contains("word-group")) {
+                el = el.parentElement;
+              }
+              return groups.length > 0 ? Array.from(groups).indexOf(el) : -1;
+            }
+
+            let currentGroupIndex = -1;
+            if (focusedWordIndex !== -1 && allChips[focusedWordIndex]) {
+              currentGroupIndex = getGroupIndex(allChips[focusedWordIndex]);
+            }
+
+            let startIdx;
+            let step;
+            if (event.key === "ArrowDown") {
+              startIdx = currentGroupIndex === -1 ? 0 : currentGroupIndex + 1;
+              step = 1;
+            } else {
+              startIdx = currentGroupIndex === -1 ? 0 : currentGroupIndex - 1;
+              step = -1;
+            }
+
+            for (let i = 0; i < groups.length; i++) {
+              const idx = (startIdx + step * i + groups.length) % groups.length;
+              const group = groups[idx];
+              const regularChip = findRegularChipInGroup(group);
+              if (regularChip) {
+                regularChip.focus();
+                focusedWordIndex = allChips.indexOf(regularChip);
+                return;
+              }
+            }
+          } else if (event.key === " " || event.key === "Spacebar") {
+            event.preventDefault();
+            const activeChip = document.activeElement;
+            if (!activeChip || !activeChip.classList.contains("word-chip")) return;
+
+            const word = activeChip.textContent;
+            let group = activeChip;
+            while (group && !group.classList.contains("word-group")) {
+              group = group.parentElement;
+            }
+            const groupLength = group?.querySelector("h3")?.textContent.match(/^\d+/)?.[0];
+
+            function focusNextRegularChip() {
+              const currentGroup = Array.from(document.querySelectorAll("#word-groups .word-group"))
+                .find((candidate) => candidate.querySelector("h3")?.textContent.startsWith(groupLength));
+              if (!currentGroup) return;
+              const currentChips = Array.from(currentGroup.querySelectorAll(".word-chip"));
+              const nextChip = currentChips.find((chip) =>
+                !favorites.has(chip.textContent) &&
+                !removedWords.has(chip.textContent) &&
+                !halfWords.has(chip.textContent)
+              );
+              if (nextChip) {
+                nextChip.focus();
+                focusedWordIndex = Array.from(document.querySelectorAll("#word-groups .word-chip")).indexOf(nextChip);
+              } else {
+                focusedWordIndex = -1;
+              }
+            }
+
+            if (spaceTimer !== null) {
+              window.clearTimeout(spaceTimer);
+              spaceTimer = null;
+              toggleRemovedWord(word);
+              focusNextRegularChip();
+            } else {
+              spaceTimer = window.setTimeout(() => {
+                spaceTimer = null;
+                toggleFavorite(word);
+                focusNextRegularChip();
+              }, 300);
+            }
+          }
+
+          if (event.key === "Shift") {
+            if (shiftTimer !== null) {
+              window.clearTimeout(shiftTimer);
+              shiftTimer = null;
+              if (pendingShiftWord) {
+                if (halfWords.has(pendingShiftWord)) {
+                  halfWords.delete(pendingShiftWord);
+                } else {
+                  halfWords.add(pendingShiftWord);
+                }
+                saveHalfWords();
+                renderSearch(lastSearch);
+                const updatedChip = Array.from(document.querySelectorAll("#word-groups .word-chip"))
+                  .find((chip) => chip.textContent === pendingShiftWord);
+                if (updatedChip) {
+                  updatedChip.focus();
+                  focusedWordIndex = Array.from(document.querySelectorAll("#word-groups .word-chip")).indexOf(updatedChip);
+                }
+                pendingShiftWord = "";
+              }
+            } else {
+              pendingShiftWord = document.activeElement?.classList.contains("word-chip")
+                ? document.activeElement.textContent
+                : "";
+              shiftTimer = window.setTimeout(() => {
+                shiftTimer = null;
+                pendingShiftWord = "";
+              }, 300);
+            }
           }
         });
 
         try {
+          seedDefaults();
           initializeDictionary();
           loadFavorites();
           loadCustomWords();
           loadRemovedWords();
+          loadHalfWords();
           dictionaryReady = true;
         } catch (error) {
           form.querySelector("button").disabled = true;
