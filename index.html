@@ -432,7 +432,8 @@
         gap: 3px;
       }
 
-      .word-chip:focus-visible {
+      .word-chip:focus-visible,
+      .word-chip.is-keyboard-focused {
         outline: 2px solid #60a5fa;
         outline-offset: 2px;
       }
@@ -657,9 +658,9 @@
             <div class="hotkey-item"><span class="hotkey-key">←</span><span class="hotkey-desc">Previous word chip</span></div>
             <div class="hotkey-item"><span class="hotkey-key">↓</span><span class="hotkey-desc">Next shorter word group</span></div>
             <div class="hotkey-item"><span class="hotkey-key">↑</span><span class="hotkey-desc">Next longer word group</span></div>
-            <div class="hotkey-item"><span class="hotkey-key">Space ×1</span><span class="hotkey-desc">Toggle favorite on focused word</span></div>
-            <div class="hotkey-item"><span class="hotkey-key">Space ×2</span><span class="hotkey-desc">Move focused word to the end and mark it red</span></div>
-            <div class="hotkey-item"><span class="hotkey-key">Shift ×2</span><span class="hotkey-desc">Toggle the half-word mark</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Space</span><span class="hotkey-desc">Toggle favorite on focused word</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Ctrl</span><span class="hotkey-desc">Move focused word to the end and mark it red</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Shift</span><span class="hotkey-desc">Toggle the half-word mark</span></div>
             <div class="hotkey-item"><span class="hotkey-key">Click</span><span class="hotkey-desc">Single-click a word to favorite it</span></div>
             <div class="hotkey-item"><span class="hotkey-key">Double-click / double-tap</span><span class="hotkey-desc">Move word to the end and mark it red</span></div>
             <div class="hotkey-item"><span class="hotkey-key">Triple-click / triple-tap</span><span class="hotkey-desc">Toggle the half-word mark</span></div>
@@ -669,9 +670,9 @@
 
       <!-- <footer class="footer">
         Click a word once to highlight it and move it to the front of future
-        results. Double-click or double-tap a word to move it to the end of its
-        group and mark it red; triple-click or triple-tap it to toggle the
-        half-word mark. Double-click it again to return it to the normal
+        results. Press Ctrl, or double-click or double-tap a word, to move it
+        to the end of its group and mark it red. Press Shift, or triple-click
+        or triple-tap it, to toggle the half-word mark. Double-click it again to return it to the normal
         order. Add missing words from the current letters and they will be saved
         as favorites. These choices stay on this device. Dictionary:
         an-array-of-english-words (MIT licensed; see LICENSE-words.txt).
@@ -708,6 +709,7 @@
         let dictionaryReady = false;
 
         function setMessage(text, isError = false) {
+          if (!message) return;
           message.textContent = text;
           message.dataset.error = String(isError);
         }
@@ -1051,26 +1053,43 @@
           } else {
             setMessage(
               totalMatches
-                ? "Click once to save a word. Double-click or double-tap to move it to the end and mark it red."
+                ? "Click once or press Space to favorite. Press Ctrl or double-click/double-tap to move a word to the end; press Shift or triple-click/triple-tap to mark it as a half-word."
                 : "No matching words found for those letters.",
             );
           }
         }
 
         function toggleFavorite(word) {
-          if (favorites.has(word)) {
-            favorites.delete(word);
-          } else {
-            favorites.add(word);
+          toggleClassification(word, "favorite");
+        }
+
+        function toggleClassification(word, classification) {
+          const classifications = {
+            favorite: favorites,
+            removed: removedWords,
+            half: halfWords,
+          };
+          const target = classifications[classification];
+          const isAlreadyClassified = target.has(word);
+
+          for (const words of Object.values(classifications)) {
+            words.delete(word);
           }
-          const saved = saveFavorites();
+          if (!isAlreadyClassified) target.add(word);
+
+          const saved = [saveFavorites(), saveRemovedWords(), saveHalfWords()].every(Boolean);
           if (lastSearch) renderSearch(lastSearch);
-          if (!saved) {
-            setMessage(
-              "Your change is shown, but the saved word could not be stored on this device.",
-              true,
-            );
-          }
+          const labels = {
+            favorite: "favorite",
+            removed: "moved to the end and marked red",
+            half: "marked as a half-word",
+          };
+          const message = isAlreadyClassified
+            ? `${word} returned to the unclassified list.`
+            : `${word} ${labels[classification]}.`;
+          setMessage(saved
+            ? message
+            : `${message} The change could not be saved for future visits.`, !saved);
         }
 
         function handleWordClick(word, event) {
@@ -1103,38 +1122,11 @@
         }
 
         function toggleHalfWord(word) {
-          if (halfWords.has(word)) {
-            halfWords.delete(word);
-          } else {
-            halfWords.add(word);
-          }
-          const isHalfWord = halfWords.has(word);
-          const saved = saveHalfWords();
-          if (lastSearch) renderSearch(lastSearch);
-          setMessage(saved
-            ? `${word} ${isHalfWord ? "marked as a half-word" : "removed from the half-word list"}.`
-            : `${word} was updated for now, but the half-word mark could not be saved for future visits.`, !saved);
+          toggleClassification(word, "half");
         }
 
         function toggleRemovedWord(word) {
-          if (removedWords.has(word)) {
-            removedWords.delete(word);
-          } else {
-            removedWords.add(word);
-          }
-          const removed = removedWords.has(word);
-          const saved = saveRemovedWords();
-          if (lastSearch) renderSearch(lastSearch);
-          if (saved) {
-            setMessage(removed
-              ? `${word} moved to the end of its group and marked red.`
-              : `${word} restored to its normal group order.`);
-          } else {
-            setMessage(
-              `${word} was updated for now, but the change could not be saved for future visits.`,
-              true,
-            );
-          }
+          toggleClassification(word, "removed");
         }
 
         addWordForm.addEventListener("submit", (event) => {
@@ -1174,12 +1166,16 @@
           }
 
           customWords.add(word);
+          removedWords.delete(word);
+          halfWords.delete(word);
           favorites.add(word);
           const customWordSaved = saveCustomWords();
           const favoriteSaved = saveFavorites();
+          const removedSaved = saveRemovedWords();
+          const halfWordSaved = saveHalfWords();
           addWordInput.value = "";
           renderSearch(lastSearch);
-          if (customWordSaved && favoriteSaved) {
+          if (customWordSaved && favoriteSaved && removedSaved && halfWordSaved) {
             setMessage(`“${word}” added to the ${word.length}-letter group as a favorite.`);
           } else {
             setMessage(
@@ -1235,9 +1231,73 @@
         });
 
         let focusedWordIndex = -1;
-        let spaceTimer = null;
-        let shiftTimer = null;
-        let pendingShiftWord = "";
+
+        function findNextAvailableWord(groupLength, currentWord) {
+          const groups = Array.from(document.querySelectorAll("#word-groups .word-group"));
+          const currentGroupIndex = groups.findIndex((group) =>
+            group.querySelector("h3")?.textContent.startsWith(String(groupLength)),
+          );
+          if (currentGroupIndex === -1) return "";
+
+          for (let offset = 0; offset < groups.length; offset += 1) {
+            const group = groups[(currentGroupIndex + offset) % groups.length];
+            const chipsInGroup = Array.from(group.querySelectorAll(".word-chip"));
+            const currentIndex = chipsInGroup.findIndex((chip) => chip.textContent === currentWord);
+            const orderedChips = offset === 0 && currentIndex !== -1
+              ? [...chipsInGroup.slice(currentIndex + 1), ...chipsInGroup.slice(0, currentIndex)]
+              : chipsInGroup;
+            const nextChip = orderedChips.find((chip) => {
+              const candidate = chip.textContent;
+              return candidate !== currentWord &&
+                !favorites.has(candidate) &&
+                !removedWords.has(candidate) &&
+                !halfWords.has(candidate);
+            });
+            if (nextChip) return nextChip.textContent;
+          }
+
+          return "";
+        }
+
+        function focusWord(word) {
+          if (!word) {
+            focusedWordIndex = -1;
+            return;
+          }
+          const nextChip = Array.from(document.querySelectorAll("#word-groups .word-chip"))
+            .find((chip) => chip.textContent === word);
+          if (!nextChip) {
+            focusedWordIndex = -1;
+            return;
+          }
+          nextChip.focus();
+          nextChip.classList.add("is-keyboard-focused");
+          focusedWordIndex = Array.from(document.querySelectorAll("#word-groups .word-chip")).indexOf(nextChip);
+        }
+
+        function getGroupLength(chip) {
+          let group = chip;
+          while (group && !group.classList.contains("word-group")) {
+            group = group.parentElement;
+          }
+          return Number(group?.querySelector("h3")?.textContent.match(/^\d+/)?.[0]) || 0;
+        }
+
+        function classifyAndAdvance(action, word, groupLength) {
+          const nextWord = findNextAvailableWord(groupLength, word);
+          action(word);
+          focusWord(nextWord);
+        }
+
+        document.addEventListener("focusin", (event) => {
+          document.querySelectorAll("#word-groups .word-chip.is-keyboard-focused")
+            .forEach((chip) => chip.classList.remove("is-keyboard-focused"));
+          if (event.target?.classList?.contains("word-chip")) {
+            event.target.classList.add("is-keyboard-focused");
+            focusedWordIndex = Array.from(document.querySelectorAll("#word-groups .word-chip"))
+              .indexOf(event.target);
+          }
+        });
 
         document.addEventListener("keydown", (event) => {
           if (!lastSearch) return;
@@ -1275,7 +1335,7 @@
             function findRegularChipInGroup(group) {
               return Array.from(group.querySelectorAll(".word-chip")).find((chip) => {
                 const word = chip.textContent;
-                return !favorites.has(word) && !removedWords.has(word);
+                return !favorites.has(word) && !removedWords.has(word) && !halfWords.has(word);
               });
             }
 
@@ -1317,74 +1377,17 @@
             const activeChip = document.activeElement;
             if (!activeChip || !activeChip.classList.contains("word-chip")) return;
 
-            const word = activeChip.textContent;
-            let group = activeChip;
-            while (group && !group.classList.contains("word-group")) {
-              group = group.parentElement;
-            }
-            const groupLength = group?.querySelector("h3")?.textContent.match(/^\d+/)?.[0];
-
-            function focusNextRegularChip() {
-              const currentGroup = Array.from(document.querySelectorAll("#word-groups .word-group"))
-                .find((candidate) => candidate.querySelector("h3")?.textContent.startsWith(groupLength));
-              if (!currentGroup) return;
-              const currentChips = Array.from(currentGroup.querySelectorAll(".word-chip"));
-              const nextChip = currentChips.find((chip) =>
-                !favorites.has(chip.textContent) &&
-                !removedWords.has(chip.textContent) &&
-                !halfWords.has(chip.textContent)
-              );
-              if (nextChip) {
-                nextChip.focus();
-                focusedWordIndex = Array.from(document.querySelectorAll("#word-groups .word-chip")).indexOf(nextChip);
-              } else {
-                focusedWordIndex = -1;
-              }
-            }
-
-            if (spaceTimer !== null) {
-              window.clearTimeout(spaceTimer);
-              spaceTimer = null;
-              toggleRemovedWord(word);
-              focusNextRegularChip();
-            } else {
-              spaceTimer = window.setTimeout(() => {
-                spaceTimer = null;
-                toggleFavorite(word);
-                focusNextRegularChip();
-              }, 300);
-            }
+            classifyAndAdvance(toggleFavorite, activeChip.textContent, getGroupLength(activeChip));
           }
 
-          if (event.key === "Shift") {
-            if (shiftTimer !== null) {
-              window.clearTimeout(shiftTimer);
-              shiftTimer = null;
-              if (pendingShiftWord) {
-                if (halfWords.has(pendingShiftWord)) {
-                  halfWords.delete(pendingShiftWord);
-                } else {
-                  halfWords.add(pendingShiftWord);
-                }
-                saveHalfWords();
-                renderSearch(lastSearch);
-                const updatedChip = Array.from(document.querySelectorAll("#word-groups .word-chip"))
-                  .find((chip) => chip.textContent === pendingShiftWord);
-                if (updatedChip) {
-                  updatedChip.focus();
-                  focusedWordIndex = Array.from(document.querySelectorAll("#word-groups .word-chip")).indexOf(updatedChip);
-                }
-                pendingShiftWord = "";
-              }
-            } else {
-              pendingShiftWord = document.activeElement?.classList.contains("word-chip")
-                ? document.activeElement.textContent
-                : "";
-              shiftTimer = window.setTimeout(() => {
-                shiftTimer = null;
-                pendingShiftWord = "";
-              }, 300);
-            }
+          if ((event.key === "Control" || event.key === "Shift") && !event.repeat) {
+            const focusedChip = document.activeElement?.classList.contains("word-chip")
+              ? document.activeElement
+              : null;
+            if (!focusedChip) return;
+            event.preventDefault();
+            const action = event.key === "Control" ? toggleRemovedWord : toggleHalfWord;
+            classifyAndAdvance(action, focusedChip.textContent, getGroupLength(focusedChip));
           }
         });
 
