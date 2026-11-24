@@ -653,7 +653,8 @@
         <aside class="hotkey-legend" aria-label="Keyboard hotkeys">
           <h3>Keyboard hotkeys</h3>
           <div class="hotkey-grid">
-            <div class="hotkey-item"><span class="hotkey-key">Enter</span><span class="hotkey-desc">Search; press twice to enter new letters</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Enter</span><span class="hotkey-desc">Search or favorite the focused word</span></div>
+            <div class="hotkey-item"><span class="hotkey-key">Alt</span><span class="hotkey-desc">Clear the Find words box and focus it</span></div>
             <div class="hotkey-item"><span class="hotkey-key">→</span><span class="hotkey-desc">Next word chip</span></div>
             <div class="hotkey-item"><span class="hotkey-key">←</span><span class="hotkey-desc">Previous word chip</span></div>
             <div class="hotkey-item"><span class="hotkey-key">↓</span><span class="hotkey-desc">Next shorter word group</span></div>
@@ -1053,7 +1054,7 @@
           } else {
             setMessage(
               totalMatches
-                ? "Click once or press Space to favorite. Press Ctrl or double-click/double-tap to move a word to the end; press Shift or triple-click/triple-tap to mark it as a half-word."
+                ? "Click once or press Enter or Space to favorite. Press Ctrl or double-click/double-tap to move a word to the end; press Shift or triple-click/triple-tap to mark it as a half-word."
                 : "No matching words found for those letters.",
             );
           }
@@ -1199,6 +1200,7 @@
           }
           renderSearch(letters);
           input.blur();
+          focusFirstUnclassifiedWord();
         });
 
         clearButton.addEventListener("click", () => {
@@ -1212,21 +1214,12 @@
           input.focus();
         });
 
-        let enterTimer = null;
         input.addEventListener("keydown", (event) => {
           if (event.key === "Enter") {
             event.preventDefault();
-            if (enterTimer !== null) {
-              window.clearTimeout(enterTimer);
-              enterTimer = null;
-              refreshButton.click();
-            } else {
-              enterTimer = window.setTimeout(() => {
-                enterTimer = null;
-                form.requestSubmit();
-                input.blur();
-              }, 300);
-            }
+            event.stopPropagation();
+            form.requestSubmit();
+            input.blur();
           }
         });
 
@@ -1275,6 +1268,18 @@
           focusedWordIndex = Array.from(document.querySelectorAll("#word-groups .word-chip")).indexOf(nextChip);
         }
 
+        function focusFirstUnclassifiedWord() {
+          const firstUnclassified = Array.from(
+            document.querySelectorAll("#word-groups .word-chip"),
+          ).find((chip) => {
+            const word = chip.textContent;
+            return !favorites.has(word) &&
+              !removedWords.has(word) &&
+              !halfWords.has(word);
+          });
+          focusWord(firstUnclassified?.textContent || "");
+        }
+
         function getGroupLength(chip) {
           let group = chip;
           while (group && !group.classList.contains("word-group")) {
@@ -1300,6 +1305,12 @@
         });
 
         document.addEventListener("keydown", (event) => {
+          if (event.key === "Alt" && !event.repeat) {
+            event.preventDefault();
+            refreshButton.click();
+            return;
+          }
+
           if (!lastSearch) return;
 
           const active = document.activeElement;
@@ -1372,7 +1383,7 @@
                 return;
               }
             }
-          } else if (event.key === " " || event.key === "Spacebar") {
+          } else if (event.key === "Enter" || event.key === " " || event.key === "Spacebar") {
             event.preventDefault();
             const activeChip = document.activeElement;
             if (!activeChip || !activeChip.classList.contains("word-chip")) return;
