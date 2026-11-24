@@ -500,6 +500,12 @@
         font-size: 10px;
       }
 
+      .word-chip.is-newly-favorited .word-chip-label {
+        text-decoration: underline;
+        text-decoration-thickness: 2px;
+        text-underline-offset: 4px;
+      }
+
       .word-chip.is-removed {
         border-color: #a64d4d;
         background: #391f20;
@@ -705,6 +711,7 @@
         let removedWords = new Set();
         let halfWords = new Set();
         let oneTimeFavorite = new Set();
+        let newlyFavoritedThisSearch = new Set();
         let lastSearch = "";
         let storageError = "";
         let dictionaryReady = false;
@@ -981,7 +988,10 @@
                 const chip = document.createElement("button");
                 chip.type = "button";
                 chip.className = "word-chip";
-                chip.textContent = word;
+                const label = document.createElement("span");
+                label.className = "word-chip-label";
+                label.textContent = word;
+                chip.append(label);
                 chip.setAttribute("aria-label", word);
                 chip.setAttribute("aria-pressed", String(favorites.has(word)));
                 if (oneTimeFavorite.has(word)) {
@@ -990,6 +1000,9 @@
                   chip.classList.add("is-favorite");
                 } else if (halfWords.has(word)) {
                   chip.classList.add("is-half-word");
+                }
+                if (newlyFavoritedThisSearch.has(word)) {
+                  chip.classList.add("is-newly-favorited");
                 }
                 chip.addEventListener("click", (event) =>
                   handleWordClick(word, event),
@@ -1018,7 +1031,10 @@
                 const chip = document.createElement("button");
                 chip.type = "button";
                 chip.className = "word-chip";
-                chip.textContent = word;
+                const label = document.createElement("span");
+                label.className = "word-chip-label";
+                label.textContent = word;
+                chip.append(label);
                 chip.setAttribute("aria-label", word);
                 chip.setAttribute("aria-pressed", String(favorites.has(word)));
                 chip.classList.add("is-removed");
@@ -1072,6 +1088,17 @@
           };
           const target = classifications[classification];
           const isAlreadyClassified = target.has(word);
+          const wasUnclassified = Object.values(classifications).every(
+            (words) => !words.has(word),
+          );
+
+          if (classification === "favorite") {
+            if (!isAlreadyClassified && wasUnclassified) {
+              newlyFavoritedThisSearch.add(word);
+            } else if (isAlreadyClassified) {
+              newlyFavoritedThisSearch.delete(word);
+            }
+          }
 
           for (const words of Object.values(classifications)) {
             words.delete(word);
@@ -1198,6 +1225,7 @@
             input.focus();
             return;
           }
+          newlyFavoritedThisSearch.clear();
           renderSearch(letters);
           input.blur();
           focusFirstUnclassifiedWord();
