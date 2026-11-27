@@ -720,6 +720,14 @@
               <input id="half-words-in-quarter" type="checkbox" />
               <span>Move half-words to 1/4 section</span>
             </label>
+            <label class="view-option">
+              <input id="show-half-words" type="checkbox" checked />
+              <span>Show half-words</span>
+            </label>
+            <label class="view-option">
+              <input id="unclassified-in-quarter" type="checkbox" />
+              <span>Move unclassified words to 1/4 section</span>
+            </label>
           </div>
         </div>
 
@@ -763,6 +771,8 @@
         const addWordInput = document.querySelector("#add-word");
         const showRemovedWordsInput = document.querySelector("#show-removed-words");
         const halfWordsInQuarterInput = document.querySelector("#half-words-in-quarter");
+        const showHalfWordsInput = document.querySelector("#show-half-words");
+        const unclassifiedInQuarterInput = document.querySelector("#unclassified-in-quarter");
         const message = document.querySelector("#message");
         const results = document.querySelector("#results");
         const resultsTitle = document.querySelector("#results-title");
@@ -774,6 +784,8 @@
         const halfWordsStorageKey = "letterbox-half-words-v1";
         const showRemovedWordsStorageKey = "letterbox-show-removed-words-v1";
         const halfWordsInQuarterStorageKey = "letterbox-half-words-in-quarter-v1";
+        const showHalfWordsStorageKey = "letterbox-show-half-words-v1";
+        const unclassifiedInQuarterStorageKey = "letterbox-unclassified-in-quarter-v1";
         const legacyHiddenStorageKey = "letterbox-hidden-words-v1";
         const wordsByLength = new Map();
         const wordClickTimers = new Map();
@@ -788,17 +800,25 @@
         let dictionaryReady = false;
         let showRemovedWords = true;
         let halfWordsInQuarter = false;
+        let showHalfWords = true;
+        let unclassifiedInQuarter = false;
 
         function loadViewPreferences() {
           showRemovedWords = localStorage.getItem(showRemovedWordsStorageKey) !== "false";
           halfWordsInQuarter = localStorage.getItem(halfWordsInQuarterStorageKey) === "true";
+          showHalfWords = localStorage.getItem(showHalfWordsStorageKey) !== "false";
+          unclassifiedInQuarter = localStorage.getItem(unclassifiedInQuarterStorageKey) === "true";
           showRemovedWordsInput.checked = showRemovedWords;
           halfWordsInQuarterInput.checked = halfWordsInQuarter;
+          showHalfWordsInput.checked = showHalfWords;
+          unclassifiedInQuarterInput.checked = unclassifiedInQuarter;
         }
 
         function saveViewPreferences() {
           localStorage.setItem(showRemovedWordsStorageKey, String(showRemovedWords));
           localStorage.setItem(halfWordsInQuarterStorageKey, String(halfWordsInQuarter));
+          localStorage.setItem(showHalfWordsStorageKey, String(showHalfWords));
+          localStorage.setItem(unclassifiedInQuarterStorageKey, String(unclassifiedInQuarter));
         }
 
         function setMessage(text, isError = false) {
@@ -1035,12 +1055,20 @@
               }
             }
 
+            const isUnclassified = (word) =>
+              !favorites.has(word) && !removedWords.has(word) && !halfWords.has(word);
             const kept = matches.filter((word) =>
-              !removedWords.has(word) && (!halfWordsInQuarter || !halfWords.has(word)),
+              !removedWords.has(word) &&
+              (showHalfWords || !halfWords.has(word)) &&
+              !(unclassifiedInQuarter && isUnclassified(word)) &&
+              !(halfWordsInQuarter && halfWords.has(word)),
             );
             const removed = matches.filter((word) => removedWords.has(word));
             const halfWordsInRight = matches.filter((word) =>
-              halfWordsInQuarter && halfWords.has(word),
+              showHalfWords && halfWordsInQuarter && halfWords.has(word),
+            );
+            const unclassifiedInRight = matches.filter((word) =>
+              unclassifiedInQuarter && isUnclassified(word),
             );
 
             const group = document.createElement("section");
@@ -1062,7 +1090,7 @@
 
             const split = document.createElement("div");
             split.className = "words-split";
-            const hasRightColumn = showRemovedWords || halfWordsInQuarter;
+            const hasRightColumn = showRemovedWords || halfWordsInQuarter || unclassifiedInQuarter;
             if (!hasRightColumn) split.classList.add("without-right");
 
             const left = document.createElement("div");
@@ -1107,9 +1135,8 @@
               left.append(wordList);
             }
 
-            const rightWords = showRemovedWords
-              ? [...removed, ...halfWordsInRight]
-              : halfWordsInRight;
+            const visibleRemoved = showRemovedWords ? removed : [];
+            const rightWords = [...visibleRemoved, ...halfWordsInRight, ...unclassifiedInRight];
 
             if (hasRightColumn) {
               const right = document.createElement("div");
@@ -1137,16 +1164,19 @@
                   chip.setAttribute("aria-label", word);
                   chip.setAttribute("aria-pressed", String(favorites.has(word)));
                   const isRemoved = removedWords.has(word);
+                  const isHalfWord = halfWords.has(word);
                   if (isRemoved) {
                     chip.classList.add("is-removed");
-                  } else if (halfWords.has(word)) {
+                  } else if (isHalfWord) {
                     chip.classList.add("is-half-word");
                   }
                   chip.setAttribute(
                     "aria-description",
                     isRemoved
                       ? "Moved to the end of its group. Double-click to restore its order."
-                      : "Marked as a half-word.",
+                      : isHalfWord
+                        ? "Marked as a half-word."
+                        : "Unclassified word.",
                   );
                   chip.addEventListener("click", (event) =>
                     handleWordClick(word, event),
@@ -1329,6 +1359,18 @@
 
         halfWordsInQuarterInput.addEventListener("change", () => {
           halfWordsInQuarter = halfWordsInQuarterInput.checked;
+          saveViewPreferences();
+          if (lastSearch) renderSearch(lastSearch);
+        });
+
+        showHalfWordsInput.addEventListener("change", () => {
+          showHalfWords = showHalfWordsInput.checked;
+          saveViewPreferences();
+          if (lastSearch) renderSearch(lastSearch);
+        });
+
+        unclassifiedInQuarterInput.addEventListener("change", () => {
+          unclassifiedInQuarter = unclassifiedInQuarterInput.checked;
           saveViewPreferences();
           if (lastSearch) renderSearch(lastSearch);
         });
